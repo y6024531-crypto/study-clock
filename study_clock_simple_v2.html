@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Study Clock">
+<title>Study Clock</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap');
+
+  :root {
+    --bg-dark: #0f172a;
+    --wood-light: #2dd4bf;
+    --wood-mid: #0f766e;
+    --wood-dark: #134e4a;
+    --warm-glow: #5eead4;
+    --neon-amber: #38bdf8;
+    --banner-blue: #1e293b;
+    --banner-gold: #2dd4bf;
+    --badge-green: #10b981;
+    --badge-green-dark: #065f46;
+    --text-light: #f1f5f9;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+  }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: linear-gradient(135deg, #0b1120 0%, #111827 55%, #090d16 100%);
+    min-height: 100vh;
+    color: var(--text-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    overflow-x: hidden;
+  }
+
+  /* زاوية صغيرة */
+  .top-small-watermark {
+    position: fixed;
+    top: 8px;
+    left: 14px;
+    z-index: 1000;
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: rgba(255, 226, 165, 0.26);
+    pointer-events: none;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .app-wrapper {
+    width: 100%;
+    max-width: 1120px;
+    background: #111827;
+    border-radius: 24px;
+    border: 2px solid #23314d;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.65);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* علامة في النص */
+  .center-watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-18deg);
+    z-index: 999;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    font-weight: 900;
+    color: rgba(255, 228, 170, 0.085);
+    pointer-events: none;
+    white-space: nowrap;
+    letter-spacing: 2px;
+    text-shadow: 0 0 24px rgba(255, 195, 90, 0.04);
+  }
+
+  /* الهيدر */
+  .top-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 24px;
+    background: #162033;
+    border-bottom: 1px solid #263554;
+  }
+
+  .header-badge {
+    background: #0f2942;
+    border: 2.5px solid var(--banner-gold);
+    border-radius: 999px;
+    padding: 8px 26px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45), 0 0 15px rgba(230, 180, 76, 0.22);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-badge span {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #7dd3fc;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+
+  .total-stats-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(15, 10, 7, 0.75);
+    border: 1.5px solid #694326;
+    border-radius: 16px;
+    padding: 8px 18px;
+  }
+
+  .stat-item { text-align: center; }
+  .stat-label { color: #d6b694; font-size: 0.78rem; }
+  .stat-value {
+    color: var(--neon-amber);
+    font-weight: 800;
+    font-size: 1.15rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 30px;
+    background: #4e321d;
+  }
+
+  /* تقسيم الصفحة */
+  .scene-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 0;
+    position: relative;
+  }
+
+  @media (max-width: 900px) {
+    .scene-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* الجزء الشمال */
+  .left-panel {
+    padding: 24px;
+    background: #131c2e;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-left: 1px solid #24334f;
+  }
+
+  @media (max-width: 900px) {
+    .left-panel {
+      border-left: none;
+      border-bottom: 1px solid #24334f;
+    }
+  }
+
+  /* شكل الساعة */
+  .wood-clock-frame {
+    width: 100%;
+    max-width: 475px;
+    background: linear-gradient(145deg, var(--wood-light), var(--wood-mid) 55%, var(--wood-dark));
+    border-radius: 26px;
+    padding: 14px;
+    border: 2px solid #2dd4bf;
+    box-shadow:
+      0 14px 30px rgba(0, 0, 0, 0.65),
+      inset 0 2px 4px rgba(255, 235, 200, 0.45);
+    position: relative;
+  }
+
+  .wood-clock-inner {
+    background: #0d1424;
+    border-radius: 18px;
+    padding: 14px 18px 20px;
+    border: 1px solid #23324d;
+    text-align: center;
+    box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.9);
+  }
+
+  .clock-title {
+    font-size: 1.55rem;
+    font-weight: 900;
+    color: #e2e8f0;
+    text-shadow: 0 2px 10px rgba(255, 190, 80, 0.35);
+    margin-bottom: 8px;
+  }
+
+  .mode-tabs {
+    display: inline-flex;
+    background: #241913;
+    border: 1px solid #573720;
+    border-radius: 999px;
+    padding: 3px;
+    margin-bottom: 12px;
+    gap: 4px;
+  }
+
+  .mode-btn {
+    background: transparent;
+    border: none;
+    color: #cfa984;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 5px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .mode-btn.active {
+    background: linear-gradient(135deg, #f5b041, #d68910);
+    color: #1a1008;
+    box-shadow: 0 2px 10px rgba(245, 176, 65, 0.4);
+  }
+
+  .digital-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: clamp(1.95rem, 5vw, 2.85rem);
+    font-weight: 800;
+    color: var(--neon-amber);
+    background: #070c17;
+    border: 1px solid #293b5c;
+    border-radius: 12px;
+    padding: 9px 12px;
+    letter-spacing: 2px;
+    direction: ltr;
+    line-height: 1.15;
+    margin: 6px 0 12px;
+  }
+
+  .digital-display.running {
+    animation: pulseGlow 2s infinite alternate;
+  }
+
+  @keyframes pulseGlow {
+    from {
+      text-shadow: 0 0 10px rgba(255, 210, 76, 0.55), 0 0 22px rgba(255, 165, 20, 0.3);
+    }
+    to {
+      text-shadow: 0 0 18px rgba(255, 225, 115, 0.9), 0 0 38px rgba(255, 165, 20, 0.55);
+    }
+  }
+
+  .preset-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .preset-btn {
+    background: #271b14;
+    color: #f3d5ad;
+    border: 1px solid #633f24;
+    border-radius: 10px;
+    padding: 4px 10px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .preset-btn:hover {
+    background: #3b281d;
+    border-color: var(--warm-glow);
+  }
+
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .action-btn {
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    border: none;
+    border-radius: 12px;
+    padding: 9px 18px;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .action-btn:active {
+    transform: scale(0.96);
+  }
+
+  .btn-start {
+    background: linear-gradient(180deg, #2ecc71, #1e8449);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(46, 204, 113, 0.35);
+  }
+
+  .btn-pause {
+    background: linear-gradient(180deg, #f39c12, #b9770e);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(243, 156, 18, 0.35);
+  }
+
+  .btn-save {
+    background: linear-gradient(180deg, #3498db, #1f618d);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(52, 152, 219, 0.35);
+  }
+
+  .btn-reset {
+    background: linear-gradient(180deg, #5d4037, #3e2723);
+    color: #ffe8cc;
+    border: 1px solid #8d6e63;
+  }
+
+  /* مواد سريعة */
+  .core-subjects-box {
+    width: 100%;
+    max-width: 475px;
+    background: rgba(20, 13, 9, 0.85);
+    border: 1.5px solid #694326;
+    border-radius: 16px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .core-subjects-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: #ffd899;
+  }
+
+  .core-subjects-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  @media (max-width: 520px) {
+    .core-subjects-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .subject-card {
+    background: #281911;
+    border: 1px solid #593921;
+    border-radius: 12px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color 0.2s ease, transform 0.15s ease;
+  }
+
+  .subject-card.active-subject {
+    border-color: var(--neon-amber);
+    box-shadow: 0 0 12px rgba(255, 210, 76, 0.22);
+  }
+
+  .subject-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #fff2d6;
+  }
+
+  .subject-min-input {
+    width: 56px;
+    background: #170f0a;
+    color: var(--neon-amber);
+    border: 1px solid #784f2e;
+    border-radius: 7px;
+    padding: 2px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+  }
+
+  .subject-start-btn {
+    background: linear-gradient(135deg, #d68910, #9c640c);
+    color: #fff9eb;
+    border: none;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.76rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: filter 0.2s ease;
+  }
+
+  .subject-start-btn:hover {
+    filter: brightness(1.12);
+  }
+
+  /* اختيار المادة */
+  .subject-bar {
+    width: 100%;
+    max-width: 475px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: rgba(20, 13, 9, 0.8);
+    border: 1px solid #5c3b22;
+    border-radius: 14px;
+    padding: 8px 14px;
+  }
+
+  .subject-bar label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #f3d2a5;
+  }
+
+  .subject-bar select,
+  .subject-bar input {
+    background: #2b1c14;
+    color: #fff4dc;
+    border: 1px solid #754c2c;
+    border-radius: 9px;
+    padding: 5px 10px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.85rem;
+    outline: none;
+  }
+
+  /* كارت التشجيع */
+  .achievement-showcase {
+    width: 100%;
+    max-width: 475px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: linear-gradient(135deg, rgba(34, 168, 86, 0.16), rgba(19, 104, 52, 0.25));
+    border: 2px solid #2ecc71;
+    border-radius: 20px;
+    padding: 12px 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .badge-pill {
+    background: linear-gradient(180deg, #27ae60, #145a32);
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 1.05rem;
+    padding: 6px 14px;
+    border-radius: 14px;
+    border: 2px solid #a9dfbf;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    white-space: nowrap;
+  }
+
+  .achievement-text h3 {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: #82e0aa;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+
+  .achievement-text p {
+    font-size: 0.82rem;
+    color: #e8f8f5;
+    opacity: 0.9;
+  }
+
+  /* تنبيه انتهاء الوقت */
+  .ring-alert-banner {
+    display: none;
+    width: 100%;
+    max-width: 475px;
+    background: linear-gradient(135deg, #b9770e, #7e5109);
+    border: 2px solid var(--neon-amber);
+    border-radius: 14px;
+    padding: 10px 14px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    animation: alertPulse 0.9s infinite alternate;
+  }
+
+  .ring-alert-banner.active {
+    display: flex;
+  }
+
+  @keyframes alertPulse {
+    from { box-shadow: 0 0 8px rgba(255, 210, 76, 0.4); }
+    to { box-shadow: 0 0 22px rgba(255, 210, 76, 0.95); }
+  }
+
+  .stop-ring-btn {
+    background: #fff3d6;
+    color: #2b1808;
+    border: none;
+    border-radius: 9px;
+    padding: 4px 12px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  /* الجزء اليمين */
+  .right-panel {
+    position: relative;
+    background: #121b2d;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 18px;
+    min-height: 490px;
+  }
+
+  .anime-svg {
+    width: 100%;
+    height: auto;
+    max-height: 410px;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  }
+
+  .lamp-light-cone {
+    transition: opacity 0.4s ease;
+  }
+
+  /* بوكس الصوت */
+  .sound-studio-box {
+    margin-top: 10px;
+    background: rgba(16, 10, 7, 0.9);
+    border: 1px solid #664226;
+    border-radius: 14px;
+    padding: 11px 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .sound-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .sound-select {
+    background: #291a12;
+    color: #fff2d6;
+    border: 1px solid #7a502f;
+    border-radius: 9px;
+    padding: 5px 9px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    outline: none;
+    flex: 1;
+    min-width: 135px;
+  }
+
+  .quote-footer {
+    margin-top: 10px;
+    background: rgba(16, 10, 7, 0.85);
+    border: 1px solid #5e3c23;
+    border-radius: 14px;
+    padding: 10px 14px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 0.86rem;
+    color: #ffe5b4;
+  }
+
+  .audio-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .audio-btn {
+    background: #2f1e15;
+    color: #ffd24c;
+    border: 1px solid #7a502f;
+    border-radius: 10px;
+    padding: 5px 11px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .audio-btn:hover {
+    background: #3d271c;
+    border-color: var(--warm-glow);
+  }
+
+  .audio-btn.active-music {
+    background: linear-gradient(135deg, #27ae60, #196f3d);
+    color: #ffffff;
+    border-color: #82e0aa;
+  }
+
+  .volume-slider {
+    width: 76px;
+    accent-color: #f5b041;
+    cursor: pointer;
+  }
+
+  .audio-status-note {
+    font-size: 0.75rem;
+    color: #d7b794;
+  }
+
+  /* Session Log */
+  .log-section {
+    padding: 16px 24px 22px;
+    background: #0f172a;
+    border-top: 1px solid #22304a;
+  }
+
+  .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .log-header h4 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #f6d399;
+  }
+
+  .clear-btn {
+    background: transparent;
+    color: #e57373;
+    border: 1px solid rgba(229, 115, 115, 0.4);
+    border-radius: 8px;
+    padding: 3px 10px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+
+  .log-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 92px;
+    overflow-y: auto;
+  }
+
+  .log-chip {
+    background: #281911;
+    border: 1px solid #573821;
+    border-radius: 10px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    color: #ffefd6;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .log-chip strong {
+    color: var(--neon-amber);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* تغيير خلفية الرسمة بشكل أوضح */
+  .scene-layer-box {
+    position: relative;
+    width: 100%;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #141d2e;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+  }
+
+  .scene-bg-art {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    transition: background 0.35s ease;
+    background: radial-gradient(circle at 75% 20%, rgba(251, 191, 36, 0.22), transparent 45%), linear-gradient(160deg, #3b2316 0%, #1d120c 100%);
+  }
+
+  .scene-bg-art.theme-night_blue {
+    background: radial-gradient(circle at 22% 18%, rgba(125, 211, 252, 0.26), transparent 42%), linear-gradient(165deg, #172a46 0%, #0b1424 100%);
+  }
+
+  .scene-bg-art.theme-warm_desk {
+    background: radial-gradient(circle at 78% 18%, rgba(253, 224, 71, 0.24), transparent 45%), linear-gradient(165deg, #422616 0%, #1c100a 100%);
+  }
+
+  .scene-bg-art.theme-emerald_focus {
+    background: radial-gradient(circle at 25% 20%, rgba(52, 211, 153, 0.25), transparent 44%), linear-gradient(165deg, #113b2f 0%, #071914 100%);
+  }
+
+  .scene-bg-art.theme-violet_calm {
+    background: radial-gradient(circle at 72% 22%, rgba(192, 132, 252, 0.25), transparent 45%), linear-gradient(165deg, #2d1b47 0%, #120b1f 100%);
+  }
+
+  .scene-custom-photo {
+    display: none;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 1;
+  }
+
+  .main-svg-stage {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: auto;
+    max-height: 410px;
+    display: block;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .page-wm-mark {
+    position: fixed;
+    bottom: 12px;
+    right: 16px;
+    z-index: 1000;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: rgba(255, 232, 178, 0.24);
+    pointer-events: none;
+    letter-spacing: 1px;
+  }
+
+  /* ركن جدول المهام تحت */
+  .task-board-box {
+    margin-top: 14px;
+    background: rgba(16, 24, 40, 0.92);
+    border: 1px solid #2b3c5e;
+    border-radius: 16px;
+    padding: 14px 16px;
+  }
+
+  .task-board-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .task-board-top h4 {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #7dd3fc;
+  }
+
+  .task-add-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .task-input {
+    flex: 1;
+    min-width: 160px;
+    background: #0b1220;
+    color: #f1f5f9;
+    border: 1px solid #334870;
+    border-radius: 10px;
+    padding: 7px 11px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.85rem;
+    outline: none;
+  }
+
+  .task-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  .task-table th,
+  .task-table td {
+    border-bottom: 1px solid #22314d;
+    padding: 8px 10px;
+    text-align: right;
+  }
+
+  .task-table th {
+    color: #94a3b8;
+    font-weight: 800;
+  }
+
+  .done-dot-btn {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #38bdf8;
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    transition: all 0.2s ease;
+  }
+
+  .done-dot-btn.checked {
+    background: #10b981;
+    border-color: #6ee7b7;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+  }
+
+  .task-done-text {
+    text-decoration: line-through;
+    color: #64748b;
+  }
+
+  .tiny-del-btn {
+    background: transparent;
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.35);
+    border-radius: 7px;
+    padding: 2px 8px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.74rem;
+    cursor: pointer;
+  }
+
+
+  /* تنسيق بسيط وهادئ */
+  .wm-top-left {
+    position: fixed;
+    top: 10px;
+    left: 14px;
+    z-index: 1000;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.22);
+    pointer-events: none;
+  }
+
+  .wm-center-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-16deg);
+    z-index: 999;
+    font-size: clamp(1.7rem, 4.5vw, 2.8rem);
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .wm-bottom-right {
+    position: fixed;
+    bottom: 10px;
+    right: 14px;
+    z-index: 1000;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.22);
+    pointer-events: none;
+  }
+
+  .my-points-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #132238;
+    border: 1px solid #38bdf8;
+    color: #bae6fd;
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+
+  body {
+    background: #0f172a !important;
+    background-image: none !important;
+  }
+  .app-wrapper {
+    border-radius: 12px !important;
+    border: 1px solid #293548 !important;
+    box-shadow: none !important;
+  }
+  .top-bar, .left-panel, .right-panel, .task-board-box, .log-section, .sound-studio-box, .core-subjects-box, .subject-bar, .wood-clock-frame, .wood-clock-inner {
+    box-shadow: none !important;
+    border-radius: 10px !important;
+  }
+  .scene-layer-box, .main-svg-stage {
+    border-radius: 10px !important;
+    box-shadow: none !important;
+  }
+
+</style>
+</head>
+<body>
+
+<div id="helloBanner" style="position:fixed; top:14px; right:14px; z-index:2000; background:#1e293b; color:#f8fafc; border:1px solid #38bdf8; border-radius:10px; padding:8px 14px; font-size:0.88rem; font-weight:700;">
+  هالو! 👋
+</div>
+
+
+<!-- علامة صغيرة -->
+<div class="wm-top-left">Youssef Mohamed</div>
+
+<!-- علامة الوسط -->
+<div class="wm-center-box">Youssef Mohamed</div>
+
+<div class="app-wrapper">
+  <!-- شريط فوق -->
+  <header class="top-bar">
+    <div class="header-badge">
+      <span>Study Clock</span>
+    </div>
+
+    <div class="my-points-badge">نقط الإنجاز: <span id="userPointsCount">0</span></div>
+    <div class="total-stats-box">
+      <div class="stat-item">
+        <div class="stat-label">إجمالي المذاكرة</div>
+        <div class="stat-value" id="totalTimeDisplay">00:00:00</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <div class="stat-label">جلسات اليوم</div>
+        <div class="stat-value" id="sessionsCountDisplay">0</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- المحتوى الرئيسي -->
+  <main class="scene-grid">
+    <!-- الساعة والمواد -->
+    <section class="left-panel">
+      <div class="wood-clock-frame">
+        <div class="wood-clock-inner">
+          <div class="clock-title">ساعة المذاكرة</div>
+
+          <div class="mode-tabs">
+            <button class="mode-btn active" id="modeStopwatch" onclick="setMode('stopwatch')">عداد تصاعدي</button>
+            <button class="mode-btn" id="modeTimer" onclick="setMode('timer')">مؤقت تنازلي</button>
+          </div>
+
+          <div class="digital-display" id="clockDisplay">00 : 00 : 00</div>
+
+          <div class="preset-row" id="presetRow" style="display: none;">
+            <button class="preset-btn" onclick="setMins(25)">25 دقيقة (بومودورو)</button>
+            <button class="preset-btn" onclick="setMins(50)">50 دقيقة</button>
+            <button class="preset-btn" onclick="setMins(90)">90 دقيقة</button>
+            <button class="preset-btn" onclick="askCustomMins()">مخصص</button>
+          </div>
+
+          <div class="controls-row">
+            <button class="action-btn btn-start" id="startPauseBtn" onclick="toggleTimer()">▶ ابدأ</button>
+            <button class="action-btn btn-save" onclick="saveCurrentSession()">✔ حفظ الجلسة</button>
+            <button class="action-btn btn-reset" onclick="resetTimer()">↺ تصفير</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- تنبيه الرنين -->
+      <div class="ring-alert-banner" id="ringAlertBanner">
+        <span id="ringAlertText">🔔 انتهى وقت المذاكرة!</span>
+        <button class="stop-ring-btn" onclick="stopAlarm()">إيقاف الرنين</button>
+      </div>
+
+      <!-- وقت المواد -->
+      <div class="core-subjects-box">
+        <div class="core-subjects-header">
+          <span>⏱ وقت المواد (بالدقائق):</span>
+          <span style="font-size:0.75rem; color:#94a3b8;">يرن عند الانتهاء</span>
+        </div>
+        <div class="core-subjects-grid">
+          <div class="subject-card" id="card-الرياضيات">
+            <div class="subject-card-top">
+              <span>رياضة</span>
+              <input type="number" class="subject-min-input" id="mins-الرياضيات" value="45" min="1" max="600" onchange="saveTimes()">
+            </div>
+            <button class="subject-start-btn" onclick="runSubjectTimer('الرياضيات', 'mins-الرياضيات')">▶ ابدأ رياضة</button>
+          </div>
+
+          <div class="subject-card" id="card-الفيزياء">
+            <div class="subject-card-top">
+              <span>فيزيا</span>
+              <input type="number" class="subject-min-input" id="mins-الفيزياء" value="40" min="1" max="600" onchange="saveTimes()">
+            </div>
+            <button class="subject-start-btn" onclick="runSubjectTimer('الفيزياء', 'mins-الفيزياء')">▶ ابدأ فيزيا</button>
+          </div>
+
+          <div class="subject-card" id="card-الكيمياء">
+            <div class="subject-card-top">
+              <span>كيميا</span>
+              <input type="number" class="subject-min-input" id="mins-الكيمياء" value="35" min="1" max="600" onchange="saveTimes()">
+            </div>
+            <button class="subject-start-btn" onclick="runSubjectTimer('الكيمياء', 'mins-الكيمياء')">▶ ابدأ كيميا</button>
+          </div>
+
+          <div class="subject-card" id="card-الأحياء">
+            <div class="subject-card-top">
+              <span>أحياء</span>
+              <input type="number" class="subject-min-input" id="mins-الأحياء" value="35" min="1" max="600" onchange="saveTimes()">
+            </div>
+            <button class="subject-start-btn" onclick="runSubjectTimer('الأحياء', 'mins-الأحياء')">▶ ابدأ أحياء</button>
+          </div>
+
+          <div class="subject-card" id="card-اللغة العربية">
+            <div class="subject-card-top">
+              <span>عربي</span>
+              <input type="number" class="subject-min-input" id="mins-اللغة العربية" value="30" min="1" max="600" onchange="saveTimes()">
+            </div>
+            <button class="subject-start-btn" onclick="runSubjectTimer('اللغة العربية', 'mins-اللغة العربية')">▶ ابدأ عربي</button>
+          </div>
+
+          <div class="subject-card" id="card-اللغة الإنجليزية">
+            <div class="subject-card-top">
+              <span>إنجليزي</span>
+              <input type="number" class="subject-min-input" id="mins-اللغة الإنجليزية" value="30" min="1" max="600" onchange="saveTimes()">
+            </div>
+            <button class="subject-start-btn" onclick="runSubjectTimer('اللغة الإنجليزية', 'mins-اللغة الإنجليزية')">▶ ابدأ إنجليزي</button>
+          </div>
+
+          <div class="subject-card" id="card-التاريخ">
+            <div class="subject-card-top">
+              <span>تاريخ</span>
+              <input type="number" class="subject-min-input" id="mins-التاريخ" value="30" min="1" max="600" onchange="saveTimes()">
+            </div>
+            <button class="subject-start-btn" onclick="runSubjectTimer('التاريخ', 'mins-التاريخ')">▶ ابدأ تاريخ</button>
+          </div>
+
+          <div class="subject-card" id="card-الجغرافيا">
+            <div class="subject-card-top">
+              <span>جغرافيا</span>
+              <input type="number" class="subject-min-input" id="mins-الجغرافيا" value="30" min="1" max="600" onchange="saveTimes()">
+            </div>
+            <button class="subject-start-btn" onclick="runSubjectTimer('الجغرافيا', 'mins-الجغرافيا')">▶ ابدأ جغرافيا</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- المادة -->
+      <div class="subject-bar">
+        <label for="subjectSelect">المادة الحالية:</label>
+        <select id="subjectSelect" onchange="pickSubject()">
+          <option value="الرياضيات">الرياضيات</option>
+          <option value="الفيزياء">الفيزياء</option>
+          <option value="الكيمياء">الكيمياء</option>
+          <option value="الأحياء">الأحياء</option>
+          <option value="اللغة العربية">اللغة العربية</option>
+          <option value="اللغة الإنجليزية">اللغة الإنجليزية</option>
+          <option value="التاريخ">التاريخ</option>
+          <option value="الجغرافيا">الجغرافيا</option>
+          <option value="مذاكرة عامة">مذاكرة عامة</option>
+          <option value="custom">مادة أخرى...</option>
+        </select>
+        <input type="text" id="customSubjectInput" placeholder="اكتب المادة" style="display:none; width: 115px;">
+      </div>
+
+      <!-- التشجيع -->
+      <div class="achievement-showcase">
+        <div class="badge-pill">سأنجح</div>
+        <div class="achievement-text">
+          <h3>إنجاز المذاكرة</h3>
+          <p id="achievementSubtext">كل دقيقة تذاكرها بتقربك خطوة أكبر لحلمك.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- المشهد والصوت -->
+    <section class="right-panel">
+      <div id="sceneBox" class="scene-layer-box">
+        <div id="sceneBgArt" class="scene-bg-art theme-warm_desk"></div>
+        <img id="sceneCustomImg" class="scene-custom-photo" alt="">
+        <svg class="main-svg-stage" id="mainSceneSvg" viewBox="0 0 600 520" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lampCone" x1="0.3" y1="0" x2="0.6" y2="1">
+              <stop offset="0%" stop-color="#ffd56b" stop-opacity="0.45"/>
+              <stop offset="100%" stop-color="#ffaa2b" stop-opacity="0.02"/>
+            </linearGradient>
+            <linearGradient id="windowSky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#3b5998"/>
+              <stop offset="60%" stop-color="#8e6c88"/>
+              <stop offset="100%" stop-color="#f3a66f"/>
+            </linearGradient>
+            <linearGradient id="deskTop" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#8c522b"/>
+              <stop offset="50%" stop-color="#a86538"/>
+              <stop offset="100%" stop-color="#754220"/>
+            </linearGradient>
+          </defs>
+
+          <!-- خلفية الرسمة في النص -->
+          <rect id="sceneWall" x="0" y="0" width="600" height="520" fill="none"/>
+
+          <!-- عناصر تتغير حسب الخلفية المختارة -->
+          <g id="sceneThemeArt">
+            <circle id="themeOrb" cx="495" cy="75" r="28" fill="#fde68a" opacity="0.22"/>
+            <path id="themeWave" d="M 0 265 Q 150 235 300 265 T 600 265 L 600 335 L 0 335 Z" fill="#000000" opacity="0.14"/>
+          </g>
+
+          <!-- Window on Left -->
+          <rect id="windowFrame" x="36" y="34" width="150" height="190" rx="14" fill="url(#windowSky)" stroke="#6e4224" stroke-width="8"/>
+          <line x1="111" y1="34" x2="111" y2="224" stroke="#6e4224" stroke-width="6"/>
+          <line x1="36" y1="129" x2="186" y2="129" stroke="#6e4224" stroke-width="6"/>
+          <circle cx="70" cy="70" r="2" fill="#fff6cc"/>
+          <circle cx="145" cy="62" r="2.5" fill="#fff6cc"/>
+          <circle cx="85" cy="100" r="1.5" fill="#fff6cc"/>
+
+          <!-- Bookshelf on Right -->
+          <rect id="shelfBody" x="445" y="30" width="125" height="270" rx="8" fill="#4d2c16" stroke="#2c170a" stroke-width="4"/>
+          <rect x="453" y="95" width="109" height="8" fill="#7a4724"/>
+          <rect x="453" y="165" width="109" height="8" fill="#7a4724"/>
+          <rect x="453" y="235" width="109" height="8" fill="#7a4724"/>
+          <rect x="462" y="45" width="16" height="50" rx="2" fill="#e74c3c"/>
+          <rect x="481" y="50" width="14" height="45" rx="2" fill="#3498db"/>
+          <rect x="498" y="42" width="18" height="53" rx="2" fill="#f1c40f"/>
+          <rect x="520" y="52" width="15" height="43" rx="2" fill="#2ecc71"/>
+          <rect x="465" y="115" width="18" height="50" rx="2" fill="#9b59b6"/>
+          <rect x="486" y="122" width="15" height="43" rx="2" fill="#e67e22"/>
+          <rect x="505" y="112" width="20" height="53" rx="2" fill="#1abc9c"/>
+
+          <!-- String Lights across top -->
+          <path d="M 195 28 Q 320 68 445 26" fill="none" stroke="#5c4033" stroke-width="2.5"/>
+          <circle id="bulb1" cx="235" cy="41" r="5" fill="#ffd166"/>
+          <circle id="bulb2" cx="278" cy="51" r="5" fill="#ff9f1c"/>
+          <circle id="bulb3" cx="322" cy="54" r="5" fill="#ffe66d"/>
+          <circle id="bulb4" cx="366" cy="49" r="5" fill="#ff9f1c"/>
+          <circle id="bulb5" cx="408" cy="39" r="5" fill="#ffd166"/>
+
+          <!-- Potted Plant near window -->
+          <rect x="45" y="295" width="46" height="42" rx="6" fill="#b85d3b"/>
+          <path d="M 68 295 Q 42 255 34 272 Q 52 282 68 295 Z" fill="#2ecc71"/>
+          <path d="M 68 295 Q 68 242 74 242 Q 80 242 68 295 Z" fill="#27ae60"/>
+          <path d="M 68 295 Q 96 255 104 274 Q 85 283 68 295 Z" fill="#2ecc71"/>
+
+          <!-- Anime Student Character -->
+          <g id="animeStudent" transform="translate(275, 130)">
+            <rect x="-55" y="65" width="110" height="145" rx="24" fill="#3a2218" stroke="#21120c" stroke-width="4"/>
+            <path d="M -48 115 Q 0 95 48 115 L 62 215 L -62 215 Z" fill="#2c3e50" stroke="#18222c" stroke-width="3"/>
+            <path d="M -18 112 L 0 155 L 18 112 Z" fill="#ecf0f1"/>
+            <line x1="-12" y1="125" x2="-10" y2="152" stroke="#bdc3c7" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="12" y1="125" x2="10" y2="152" stroke="#bdc3c7" stroke-width="2.5" stroke-linecap="round"/>
+            <ellipse cx="0" cy="56" rx="42" ry="46" fill="#ffdbbe" stroke="#c99772" stroke-width="2.5"/>
+            <g id="eyesGroup">
+              <ellipse cx="-15" cy="60" rx="6.5" ry="8" fill="#231914"/>
+              <circle cx="-13" cy="57" r="2.5" fill="#ffffff"/>
+              <ellipse cx="15" cy="60" rx="6.5" ry="8" fill="#231914"/>
+              <circle cx="17" cy="57" r="2.5" fill="#ffffff"/>
+            </g>
+            <rect x="-26" y="51" width="22" height="17" rx="5" fill="none" stroke="#3b2f2f" stroke-width="2.5"/>
+            <rect x="4" y="51" width="22" height="17" rx="5" fill="none" stroke="#3b2f2f" stroke-width="2.5"/>
+            <line x1="-4" y1="59" x2="4" y2="59" stroke="#3b2f2f" stroke-width="2.5"/>
+            <path d="M -7 80 Q 0 85 7 80" fill="none" stroke="#9e5b40" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M -45 50 Q -48 2 -4 0 Q 46 0 45 50 Q 35 26 22 38 Q 14 20 2 36 Q -12 18 -24 38 Q -36 24 -45 50 Z" fill="#1a1618"/>
+            <path d="M 42 128 Q 72 155 52 188" fill="none" stroke="#2c3e50" stroke-width="18" stroke-linecap="round"/>
+            <circle cx="50" cy="190" r="9" fill="#ffdbbe"/>
+            <line x1="50" y1="190" x2="34" y2="216" stroke="#f1c40f" stroke-width="4.5" stroke-linecap="round"/>
+          </g>
+
+          <!-- Study Desk -->
+          <rect x="0" y="335" width="600" height="26" rx="6" fill="url(#deskTop)" stroke="#4d2912" stroke-width="3"/>
+          <rect id="deskBase" x="20" y="361" width="560" height="159" fill="#4e2b14"/>
+
+          <!-- Open Notebook -->
+          <g transform="translate(215, 305)">
+            <polygon points="0,12 72,4 72,34 0,42" fill="#f9f5eb" stroke="#b8a990" stroke-width="2"/>
+            <polygon points="72,4 144,12 144,42 72,34" fill="#fffdf7" stroke="#b8a990" stroke-width="2"/>
+            <line x1="72" y1="4" x2="72" y2="34" stroke="#8c7a5b" stroke-width="2.5"/>
+            <line x1="14" y1="20" x2="58" y2="15" stroke="#95a5a6" stroke-width="2"/>
+            <line x1="14" y1="28" x2="52" y2="24" stroke="#95a5a6" stroke-width="2"/>
+            <line x1="84" y1="15" x2="130" y2="20" stroke="#95a5a6" stroke-width="2"/>
+            <line x1="84" y1="24" x2="122" y2="28" stroke="#95a5a6" stroke-width="2"/>
+          </g>
+
+          <!-- Textbooks -->
+          <rect x="115" y="311" width="82" height="12" rx="2" fill="#c0392b" stroke="#7b241c" stroke-width="1.5"/>
+          <rect x="120" y="299" width="76" height="12" rx="2" fill="#2980b9" stroke="#1b4f72" stroke-width="1.5"/>
+          <rect x="112" y="287" width="85" height="12" rx="2" fill="#f39c12" stroke="#9c640c" stroke-width="1.5"/>
+
+          <!-- Warm Mug -->
+          <rect x="420" y="305" width="32" height="30" rx="5" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="2"/>
+          <path d="M 452 312 Q 463 312 463 320 Q 463 328 452 328" fill="none" stroke="#ecf0f1" stroke-width="3.5"/>
+
+          <!-- Desk Lamp -->
+          <g id="deskLamp" transform="translate(80, 175)">
+            <rect x="-22" y="152" width="44" height="10" rx="4" fill="#d4882a"/>
+            <path d="M 0 152 L -12 85 L 28 32" fill="none" stroke="#e09f3e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+            <polygon points="10,22 52,42 36,64 2,44" fill="#f5b041" stroke="#b9770e" stroke-width="2.5"/>
+            <circle cx="24" cy="52" r="9" fill="#fff7b2" id="lampBulb"/>
+          </g>
+
+          <!-- Light Cone -->
+          <polygon class="lamp-light-cone" id="lampLightCone" points="104,227 136,247 375,345 145,345" fill="url(#lampCone)"/>
+        </svg>
+      </div>
+
+      <!-- الخلفية -->
+      <div class="sound-studio-box" id="bgBox">
+        <div class="sound-row">
+          <select class="sound-select" id="bgSelect" onchange="pickBg()">
+            <option value="night_blue">خلفية ليلية هادئة</option>
+            <option value="warm_desk">خلفية دافئة للمذاكرة</option>
+            <option value="emerald_focus">خلفية خضراء للتركيز</option>
+            <option value="violet_calm">خلفية بنفسجية هادئة</option>
+          </select>
+          <label class="audio-btn" for="customBgFile" style="cursor:pointer;">رفع خلفية</label>
+          <input type="file" id="customBgFile" accept="image/*" style="display:none;" onchange="uploadBg(event)">
+        </div>
+        <div class="audio-status-note" id="bgStatusNote">اختر خلفية جاهزة أو ارفع صورة من جهازك.</div>
+      </div>
+
+      <!-- النغمات -->
+      <div class="sound-studio-box">
+        <div class="sound-row">
+          <input type="file" id="myMusicFile" accept="audio/*" style="display:none;" onchange="loadMySong(event)">
+          <label for="myMusicFile" class="audio-btn" style="cursor:pointer;">إضافة ميوزك</label>
+          <select class="sound-select" id="calmTrackSelect" onchange="pickMelody()">
+            <option value="dream">🎵 رحلة حالمة (أجواء هادئة)</option>
+            <option value="rain">🌧️ مطر ناعم على النافذة</option>
+            <option value="night">🌙 نسيم الليل ونجوم هادئة</option>
+            <option value="piano">🎹 ألحان بيانو خفيفة للتركيز</option>
+            <option value="forest">🍃 همس الصباح والنسيم الدافئ</option>
+            <option value="stream">💧 خرير ماء هادئ للتركيز</option>
+            <option value="lofi">🎧 لو-فاي دافئ للمذاكرة</option>
+            <option value="chimes">🎐 نغمات أجراس هادئة</option>
+          </select>
+          <button class="audio-btn" id="musicBtn" onclick="toggleMusic()">▶ تشغيل النغمة</button>
+          <input type="range" class="volume-slider" id="musicVolume" min="0" max="1" step="0.05" value="0.4" title="مستوى صوت النغمات" oninput="setVol()">
+        </div>
+
+        <div class="audio-status-note" id="audioStatusNote">اختر نغمة هادئة من القائمة وشغّلها أثناء المذاكرة.</div>
+      </div>
+
+      <div class="quote-footer">
+        <span id="motivationalQuote">«الاستمرارية الصغيرة كل يوم تصنع إنجازاً كبيراً.»</span>
+        <div class="audio-controls">
+          <button class="audio-btn" id="soundBtn" onclick="toggleBell()">🔔 الرنين: مفعل</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ركن الجدول والنقط عند الإنجاز -->
+  <section class="task-board-box">
+    <div class="task-board-top">
+      <h4>📋 جدول المهام (اضغط النقطة عند إنهاء كل حاجة)</h4>
+      <span id="tasksProgressNote" style="font-size:0.8rem; color:#94a3b8;">0 / 0 منجز</span>
+    </div>
+    <div class="task-add-bar">
+      <input type="text" id="newTaskTitle" class="task-input" placeholder="اكتب مهمة أو درس...">
+      <input type="text" id="newTaskNote" class="task-input" style="max-width:180px;" placeholder="ملاحظة أو وقت">
+      <button class="audio-btn" onclick="addTaskRow()">+ إضافة</button>
+    </div>
+    <table class="task-table">
+      <thead>
+        <tr>
+          <th style="width:52px;">نقطة</th>
+          <th>الحاجة / المهمة</th>
+          <th>التفاصيل</th>
+          <th style="width:70px;">حذف</th>
+        </tr>
+      </thead>
+      <tbody id="taskTableBody"></tbody>
+    </table>
+  </section>
+
+  <!-- السجل -->
+  <section class="log-section">
+    <div class="log-header">
+      <h4>سجل جلسات المذاكرة المحفوظة</h4>
+      <button class="clear-btn" onclick="resetLog()">مسح السجل</button>
+    </div>
+    <div class="log-list" id="sessionLogList"></div>
+  </section>
+</div>
+
+
+<script>
+  const STORAGE_KEY = 'my_study_v14';
+
+  let state = {
+    mode: 'stopwatch',
+    elapsedSeconds: 0,
+    countdownRemaining: 25 * 60,
+    countdownTotal: 25 * 60,
+    running: false,
+    totalSavedSeconds: 0,
+    sessionsCount: 0,
+    logs: [],
+    soundEnabled: true,
+    musicEnabled: false,
+    calmTrack: 'dream',
+    musicVolume: 0.4,
+    subject: 'الرياضيات',
+    subjectMinutes: {
+      'الرياضيات': 45,
+      'الفيزياء': 40,
+      'الكيمياء': 35,
+      'الأحياء': 35,
+      'اللغة العربية': 30,
+      'اللغة الإنجليزية': 30
+    }
+  };
+
+  let intervalId = null;
+  let audioCtx = null;
+  let musicTimerId = null;
+  let alarmLoopId = null;
+  let phraseIndex = 0;
+
+  const quotes = [
+    '«الاستمرارية الصغيرة كل يوم تصنع إنجازاً كبيراً.»',
+    '«تركيز ساعة واحدة صافية خير من ساعات مشتتة.»',
+    '«كل صفحة تذاكرها اليوم هي رصيد لنجاحك غداً.»',
+    '«الهدوء والتركيز هما مفتاح الفهم العميق.»'
+  ];
+  let quoteIndex = 0;
+
+  const melodies = {
+    dream: [
+      { pad: [174.61, 220.00, 261.63, 329.63], arp: [523.25, 659.25, 783.99, 987.77], wave: 'sine', interval: 5000 },
+      { pad: [146.83, 220.00, 261.63, 329.63], arp: [440.00, 587.33, 659.25, 880.00], wave: 'sine', interval: 5000 }
+    ],
+    rain: [
+      { pad: [130.81, 196.00, 261.63], arp: [392.00, 523.25, 659.25, 523.25], wave: 'sine', interval: 4200, rain: true },
+      { pad: [146.83, 220.00, 293.66], arp: [440.00, 587.33, 739.99, 587.33], wave: 'sine', interval: 4200, rain: true }
+    ],
+    night: [
+      { pad: [110.00, 164.81, 220.00, 277.18], arp: [329.63, 440.00, 554.37, 659.25], wave: 'triangle', interval: 5400 },
+      { pad: [123.47, 185.00, 246.94, 311.13], arp: [369.99, 493.88, 622.25, 739.99], wave: 'triangle', interval: 5400 }
+    ],
+    piano: [
+      { pad: [174.61, 261.63], arp: [349.23, 440.00, 523.25, 659.25], wave: 'sine', interval: 4000 },
+      { pad: [196.00, 293.66], arp: [392.00, 493.88, 587.33, 783.99], wave: 'sine', interval: 4000 }
+    ],
+    forest: [
+      { pad: [196.00, 246.94, 293.66], arp: [392.00, 493.88, 587.33, 739.99], wave: 'sine', interval: 4800, rain: true },
+      { pad: [220.00, 261.63, 329.63], arp: [440.00, 523.25, 659.25, 783.99], wave: 'sine', interval: 4800 }
+    ],
+    stream: [
+      { pad: [164.81, 246.94, 329.63], arp: [493.88, 659.25, 739.99, 659.25], wave: 'sine', interval: 3900, rain: true },
+      { pad: [146.83, 220.00, 329.63], arp: [440.00, 587.33, 659.25, 587.33], wave: 'sine', interval: 3900, rain: true }
+    ],
+    lofi: [
+      { pad: [130.81, 155.56, 196.00, 233.08], arp: [392.00, 466.16, 523.25, 622.25], wave: 'triangle', interval: 4500 },
+      { pad: [110.00, 130.81, 164.81, 196.00], arp: [329.63, 392.00, 493.88, 587.33], wave: 'triangle', interval: 4500 }
+    ],
+    chimes: [
+      { pad: [261.63, 392.00], arp: [523.25, 783.99, 1046.50, 880.00], wave: 'sine', interval: 4600 },
+      { pad: [293.66, 440.00], arp: [587.33, 880.00, 1174.66, 987.77], wave: 'sine', interval: 4600 }
+    ]
+  };
+
+  function initAudio() {
+    if (!audioCtx) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContextClass();
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  function playDrop() {
+    if (!audioCtx || !state.musicEnabled) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const dropFreq = 900 + Math.random() * 1400;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(dropFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(dropFreq * 0.65, now + 0.08);
+
+    const vol = Math.max(0.001, state.musicVolume * 0.025);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(vol, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.1);
+  }
+
+  function playPad(freq, durationSec, waveType) {
+    if (!audioCtx || !state.musicEnabled) return;
+    const now = audioCtx.currentTime;
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const filter = audioCtx.createBiquadFilter();
+    const gain = audioCtx.createGain();
+
+    osc1.type = waveType || 'sine';
+    osc1.frequency.setValueAtTime(freq, now);
+
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(freq * 1.0025, now);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(640, now);
+    filter.frequency.linearRampToValueAtTime(860, now + durationSec * 0.5);
+    filter.frequency.linearRampToValueAtTime(480, now + durationSec);
+
+    const peak = Math.max(0.001, state.musicVolume * 0.06);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(peak, now + 1.3);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + durationSec + 0.1);
+    osc2.stop(now + durationSec + 0.1);
+  }
+
+  function playPluck(freq, offsetSec, waveType) {
+    if (!audioCtx || !state.musicEnabled) return;
+    const now = audioCtx.currentTime + offsetSec;
+    const osc = audioCtx.createOscillator();
+    const filter = audioCtx.createBiquadFilter();
+    const gain = audioCtx.createGain();
+
+    osc.type = waveType || 'sine';
+    osc.frequency.setValueAtTime(freq, now);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1500, now);
+    filter.frequency.exponentialRampToValueAtTime(420, now + 2.4);
+
+    const peak = Math.max(0.001, state.musicVolume * 0.072);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(peak, now + 0.07);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.6);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(now);
+    osc.stop(now + 2.7);
+  }
+
+  function playNextNote() {
+    if (!state.musicEnabled) return;
+    const list = melodies[state.calmTrack] || melodies.dream;
+    const current = list[phraseIndex % list.length];
+    phraseIndex++;
+
+    current.pad.forEach(freq => playPad(freq, (current.interval / 1000) + 0.4, current.wave));
+    current.arp.forEach((freq, idx) => {
+      playPluck(freq, 0.35 + idx * 0.95, current.wave);
+    });
+
+    if (current.rain) {
+      for (let i = 0; i < 6; i++) {
+        setTimeout(() => playDrop(), i * 650);
+      }
+    }
+  }
+
+  // تشغيل النغمة
+  function playMusic() {
+
+    initAudio();
+    state.musicEnabled = true;
+    syncMusicBtn();
+    saveData();
+
+    if (musicTimerId) clearInterval(musicTimerId);
+    const list = melodies[state.calmTrack] || melodies.dream;
+    const intervalMs = list[0].interval || 4800;
+
+    playNextNote();
+    musicTimerId = setInterval(() => {
+      if (!state.musicEnabled) return;
+      playNextNote();
+    }, intervalMs);
+
+    const trackLabel = document.getElementById('calmTrackSelect').selectedOptions[0].text;
+    document.getElementById('audioStatusNote').textContent = `تعمل الآن: ${trackLabel}`;
+  }
+
+  function pauseMusic() {
+    state.musicEnabled = false;
+    if (musicTimerId) {
+      clearInterval(musicTimerId);
+      musicTimerId = null;
+    }
+    syncMusicBtn();
+    saveData();
+  }
+
+  function toggleMusic() {
+    if (state.musicEnabled) {
+      pauseMusic();
+      document.getElementById('audioStatusNote').textContent = 'تم الإيقاف.';
+    } else {
+      playMusic();
+    }
+  }
+
+  function pickMelody() {
+    state.calmTrack = document.getElementById('calmTrackSelect').value;
+    saveData();
+    if (state.musicEnabled) {
+      playMusic();
+    }
+  }
+
+  function setVol() {
+    const slider = document.getElementById('musicVolume');
+    state.musicVolume = parseFloat(slider.value);
+    const songEl = document.getElementById('songAudio');
+    if (songEl) songEl.volume = state.musicVolume;
+    saveData();
+  }
+
+  function syncMusicBtn() {
+    const musicBtn = document.getElementById('musicBtn');
+    if (state.musicEnabled) {
+      musicBtn.textContent = '⏹ إيقاف';
+      musicBtn.classList.add('active-music');
+    } else {
+      musicBtn.textContent = '▶ تشغيل';
+      musicBtn.classList.remove('active-music');
+    }
+  }
+
+  function ringOnce() {
+    if (!state.soundEnabled) return;
+    try {
+      initAudio();
+      const pattern = [
+        { freq: 880, delay: 0, dur: 0.16 },
+        { freq: 1046.5, delay: 0.18, dur: 0.16 },
+        { freq: 880, delay: 0.36, dur: 0.16 },
+        { freq: 1174.66, delay: 0.56, dur: 0.32 }
+      ];
+      pattern.forEach(item => {
+        const startAt = audioCtx.currentTime + item.delay;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(item.freq, startAt);
+
+        gain.gain.setValueAtTime(0.0001, startAt);
+        gain.gain.linearRampToValueAtTime(0.22, startAt + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startAt + item.dur);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(startAt);
+        osc.stop(startAt + item.dur + 0.03);
+      });
+    } catch (e) {
+      console.warn('Alarm ring failed:', e);
+    }
+  }
+
+  function triggerAlarm(subjectLabel) {
+    const banner = document.getElementById('ringAlertBanner');
+    const alertText = document.getElementById('ringAlertText');
+    alertText.textContent = `🔔 انتهى وقت مذاكرة (${subjectLabel})!`;
+    banner.classList.add('active');
+
+    stopAlarm(false);
+    ringOnce();
+
+    let ringCount = 1;
+    alarmLoopId = setInterval(() => {
+      if (ringCount >= 5) {
+        stopAlarm(false);
+        return;
+      }
+      ringOnce();
+      ringCount++;
+    }, 1400);
+  }
+
+  function stopAlarm(hideBanner = true) {
+    if (alarmLoopId) {
+      clearInterval(alarmLoopId);
+      alarmLoopId = null;
+    }
+    if (hideBanner) {
+      document.getElementById('ringAlertBanner').classList.remove('active');
+    }
+  }
+
+  const subjectsList = [
+    { name: 'الرياضيات', defMin: 45 },
+    { name: 'الفيزياء', defMin: 40 },
+    { name: 'الكيمياء', defMin: 35 },
+    { name: 'الأحياء', defMin: 35 },
+    { name: 'اللغة العربية', defMin: 30 },
+    { name: 'اللغة الإنجليزية', defMin: 30 },
+    { name: 'التاريخ', defMin: 30 },
+    { name: 'الجغرافيا', defMin: 30 }
+  ];
+
+  // حفظ دقايق المواد
+  function saveTimes() {
+    const updated = {};
+    subjectsList.forEach(item => {
+      const el = document.getElementById(`mins-${item.name}`);
+      const val = Math.max(1, parseInt(el.value, 10) || item.defMin);
+      el.value = val;
+      updated[item.name] = val;
+    });
+    state.subjectMinutes = updated;
+    saveData();
+  }
+
+  function markActiveSubject(subjectName) {
+    subjectsList.forEach(item => {
+      const card = document.getElementById(`card-${item.name}`);
+      if (card) {
+        card.classList.toggle('active-subject', item.name === subjectName);
+      }
+    });
+  }
+
+  function runSubjectTimer(subjectName, inputId) {
+    saveTimes();
+    stopAlarm(true);
+
+    const mins = Math.max(1, parseInt(document.getElementById(inputId).value, 10) || 25);
+    const selectEl = document.getElementById('subjectSelect');
+    const customInput = document.getElementById('customSubjectInput');
+
+    if (Array.from(selectEl.options).some(o => o.value === subjectName)) {
+      selectEl.value = subjectName;
+      customInput.style.display = 'none';
+    } else {
+      selectEl.value = 'custom';
+      customInput.style.display = 'inline-block';
+      customInput.value = subjectName;
+    }
+
+    markActiveSubject(subjectName);
+    setMode('timer');
+    setMins(mins);
+    startTimer();
+    saveData();
+
+    document.getElementById('achievementSubtext').textContent =
+      `بدأت جلسة (${subjectName}) لمدة ${mins} دقيقة — ركّز وسيرن عند الانتهاء.`;
+  }
+
+  function loadData() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        state = {
+          ...state,
+          totalSavedSeconds: parsed.totalSavedSeconds || 0,
+          sessionsCount: parsed.sessionsCount || 0,
+          logs: Array.isArray(parsed.logs) ? parsed.logs : [],
+          soundEnabled: parsed.soundEnabled !== undefined ? parsed.soundEnabled : true,
+          calmTrack: parsed.calmTrack || 'dream',
+          musicVolume: parsed.musicVolume !== undefined ? parsed.musicVolume : 0.4,
+          subject: parsed.subject || 'الرياضيات',
+          subjectMinutes: {
+            'الرياضيات': parsed.subjectMinutes?.['الرياضيات'] || 45,
+            'الفيزياء': parsed.subjectMinutes?.['الفيزياء'] || 40,
+            'الكيمياء': parsed.subjectMinutes?.['الكيمياء'] || 35
+          }
+        };
+      }
+    } catch (e) {
+      console.warn('Storage unavailable:', e);
+    }
+
+    subjectsList.forEach(item => {
+      const el = document.getElementById(`mins-${item.name}`);
+      if (el) el.value = state.subjectMinutes[item.name] || item.defMin;
+    });
+    document.getElementById('calmTrackSelect').value = state.calmTrack;
+
+    const selectEl = document.getElementById('subjectSelect');
+    const customInput = document.getElementById('customSubjectInput');
+    const options = Array.from(selectEl.options).map(o => o.value);
+    if (options.includes(state.subject)) {
+      selectEl.value = state.subject;
+    } else {
+      selectEl.value = 'custom';
+      customInput.style.display = 'inline-block';
+      customInput.value = state.subject;
+    }
+
+    markActiveSubject(currentSubject());
+    document.getElementById('musicVolume').value = state.musicVolume;
+    syncMusicBtn();
+    syncBellBtn();
+    refreshView();
+    showClock();
+  }
+
+  function saveData() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        totalSavedSeconds: state.totalSavedSeconds,
+        sessionsCount: state.sessionsCount,
+        logs: state.logs.slice(0, 25),
+        soundEnabled: state.soundEnabled,
+        calmTrack: state.calmTrack,
+        musicVolume: state.musicVolume,
+        subject: currentSubject(),
+        subjectMinutes: state.subjectMinutes
+      }));
+    } catch (e) {
+      console.warn('Failed saving state:', e);
+    }
+  }
+
+  function currentSubject() {
+    const selectEl = document.getElementById('subjectSelect');
+    const customInput = document.getElementById('customSubjectInput');
+    if (selectEl.value === 'custom') {
+      return customInput.value.trim() || 'مادة مخصصة';
+    }
+    return selectEl.value;
+  }
+
+  function pickSubject() {
+    const selectEl = document.getElementById('subjectSelect');
+    const customInput = document.getElementById('customSubjectInput');
+    if (selectEl.value === 'custom') {
+      customInput.style.display = 'inline-block';
+      customInput.focus();
+    } else {
+      customInput.style.display = 'none';
+    }
+    markActiveSubject(currentSubject());
+    saveData();
+  }
+
+  function fmtClock(totalSec) {
+    const safe = Math.max(0, Math.floor(totalSec));
+    const hrs = String(Math.floor(safe / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((safe % 3600) / 60)).padStart(2, '0');
+    const secs = String(safe % 60).padStart(2, '0');
+    return `${hrs} : ${mins} : ${secs}`;
+  }
+
+  function fmtShort(totalSec) {
+    const safe = Math.max(0, Math.floor(totalSec));
+    const hrs = String(Math.floor(safe / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((safe % 3600) / 60)).padStart(2, '0');
+    const secs = String(safe % 60).padStart(2, '0');
+    return `${hrs}:${mins}:${secs}`;
+  }
+
+  function showClock() {
+    const display = document.getElementById('clockDisplay');
+    const secToShow = state.mode === 'stopwatch' ? state.elapsedSeconds : state.countdownRemaining;
+    display.textContent = fmtClock(secToShow);
+
+    if (state.running) {
+      display.classList.add('running');
+      document.getElementById('lampLightCone').style.opacity = '1';
+    } else {
+      display.classList.remove('running');
+      document.getElementById('lampLightCone').style.opacity = '0.55';
+    }
+  }
+
+  function setMode(newMode) {
+    pauseTimer();
+    state.mode = newMode;
+    document.getElementById('modeStopwatch').classList.toggle('active', newMode === 'stopwatch');
+    document.getElementById('modeTimer').classList.toggle('active', newMode === 'timer');
+    document.getElementById('presetRow').style.display = newMode === 'timer' ? 'flex' : 'none';
+    showClock();
+  }
+
+  function setMins(mins) {
+    pauseTimer();
+    const secs = Math.max(1, mins) * 60;
+    state.countdownTotal = secs;
+    state.countdownRemaining = secs;
+    showClock();
+  }
+
+  function askCustomMins() {
+    const input = prompt('أدخل عدد الدقائق للمؤقت التنازلي:', '45');
+    if (input !== null) {
+      const val = parseInt(input, 10);
+      if (!isNaN(val) && val > 0 && val <= 600) {
+        setMins(val);
+      }
+    }
+  }
+
+  function toggleTimer() {
+    if (state.running) {
+      pauseTimer();
+    } else {
+      startTimer();
+    }
+  }
+
+  function startTimer() {
+    if (state.running) return;
+    stopAlarm(true);
+    if (state.mode === 'timer' && state.countdownRemaining <= 0) {
+      state.countdownRemaining = state.countdownTotal;
+    }
+    state.running = true;
+    const btn = document.getElementById('startPauseBtn');
+    btn.textContent = '⏸ إيقاف مؤقت';
+    btn.className = 'action-btn btn-pause';
+    showClock();
+
+    intervalId = setInterval(() => {
+      if (state.mode === 'stopwatch') {
+        state.elapsedSeconds += 1;
+      } else {
+        if (state.countdownRemaining > 0) {
+          state.countdownRemaining -= 1;
+        }
+        if (state.countdownRemaining <= 0) {
+          pauseTimer();
+          const finishedSubject = currentSubject();
+          triggerAlarm(finishedSubject);
+          autoSaveDone();
+        }
+      }
+      showClock();
+    }, 1000);
+  }
+
+  function pauseTimer() {
+    state.running = false;
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+    const btn = document.getElementById('startPauseBtn');
+    btn.textContent = '▶ ابدأ';
+    btn.className = 'action-btn btn-start';
+    showClock();
+  }
+
+  function resetTimer() {
+    pauseTimer();
+    stopAlarm(true);
+    if (state.mode === 'stopwatch') {
+      state.elapsedSeconds = 0;
+    } else {
+      state.countdownRemaining = state.countdownTotal;
+    }
+    showClock();
+  }
+
+  function autoSaveDone() {
+    const duration = state.countdownTotal;
+    if (duration > 0) {
+      logSession(duration);
+      document.getElementById('achievementSubtext').textContent =
+        'أحسنت! انتهى وقت الجلسة وتمت إضافتها تلقائياً إلى إنجازك.';
+    }
+  }
+
+  // حفظ الجلسة
+  function saveCurrentSession() {
+    let duration = 0;
+    if (state.mode === 'stopwatch') {
+      duration = state.elapsedSeconds;
+    } else {
+      duration = Math.max(0, state.countdownTotal - state.countdownRemaining);
+    }
+
+    if (duration < 5) {
+      alert('شغّل العداد لمدة 5 ثوانٍ على الأقل حتى يتم حفظ الجلسة.');
+      return;
+    }
+
+    pauseTimer();
+    stopAlarm(true);
+    logSession(duration);
+    if (state.mode === 'stopwatch') {
+      state.elapsedSeconds = 0;
+    } else {
+      state.countdownRemaining = state.countdownTotal;
+    }
+    showClock();
+
+    quoteIndex = (quoteIndex + 1) % quotes.length;
+    document.getElementById('motivationalQuote').textContent = quotes[quoteIndex];
+    document.getElementById('achievementSubtext').textContent =
+      'تم حفظ الجلسة بنجاح! كل خطوة ثابتة تصنع الفارق.';
+  }
+
+  function logSession(seconds) {
+    state.totalSavedSeconds += seconds;
+    state.sessionsCount += 1;
+    const now = new Date();
+    const timeLabel = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    state.logs.unshift({
+      subject: currentSubject(),
+      duration: seconds,
+      time: timeLabel
+    });
+    saveData();
+    refreshView();
+  }
+
+  function refreshView() {
+    document.getElementById('totalTimeDisplay').textContent = fmtShort(state.totalSavedSeconds);
+    document.getElementById('sessionsCountDisplay').textContent = state.sessionsCount;
+
+    const listEl = document.getElementById('sessionLogList');
+    if (state.logs.length === 0) {
+      listEl.innerHTML = '<span style="color:#a98b70; font-size:0.84rem;">لا توجد جلسات محفوظة بعد — ابدأ جلستك الأولى الآن!</span>';
+      return;
+    }
+
+    listEl.innerHTML = state.logs.slice(0, 12).map(item => `
+      <div class="log-chip">
+        <span>${item.subject}</span>
+        <strong>${fmtShort(item.duration)}</strong>
+        <span style="opacity:0.7; font-size:0.74rem;">(${item.time})</span>
+      </div>
+    `).join('');
+  }
+
+  function resetLog() {
+    if (!confirm('هل تريد مسح سجل الجلسات وإجمالي الساعات المحفوظة؟')) return;
+    state.totalSavedSeconds = 0;
+    state.sessionsCount = 0;
+    state.logs = [];
+    saveData();
+    refreshView();
+  }
+
+  function toggleBell() {
+    state.soundEnabled = !state.soundEnabled;
+    syncBellBtn();
+    saveData();
+  }
+
+  function syncBellBtn() {
+    const btn = document.getElementById('soundBtn');
+    btn.textContent = state.soundEnabled ? '🔔 الرنين: مفعل' : '🔕 الرنين: مكتوم';
+  }
+
+  setInterval(() => {
+    const eyes = document.getElementById('eyesGroup');
+    if (!eyes) return;
+    eyes.setAttribute('transform', 'scale(1, 0.12)');
+    eyes.style.transformOrigin = '0px 60px';
+    setTimeout(() => {
+      eyes.setAttribute('transform', 'scale(1, 1)');
+    }, 150);
+  }, 4200);
+
+
+  // تغيير الخلفية بالكامل للصفحة وللرسمة
+  var fullBgMap = {
+    night_blue: { page: '#091322', desk: '#1e3a5f', orb: '#7dd3fc', bulb: '#38bdf8' },
+    warm_desk: { page: '#1c110b', desk: '#5c3218', orb: '#fde047', bulb: '#facc15' },
+    emerald_focus: { page: '#071b15', desk: '#144536', orb: '#6ee7b7', bulb: '#34d399' },
+    violet_calm: { page: '#140c24', desk: '#3a225c', orb: '#e9d5ff', bulb: '#c084fc' }
+  };
+
+  function setWholeBg(key) {
+    var cfg = fullBgMap[key] || fullBgMap.warm_desk;
+    document.body.style.background = cfg.page;
+    document.body.style.backgroundImage = 'none';
+
+    var pic = document.getElementById('sceneCustomImg');
+    var bgBox = document.getElementById('sceneBgArt');
+    var desk = document.getElementById('deskBase');
+    var orb = document.getElementById('themeOrb');
+
+    if (pic) { pic.style.display = 'none'; pic.src = ''; }
+    if (bgBox) { bgBox.className = 'scene-bg-art theme-' + key; }
+    if (desk) { desk.setAttribute('fill', cfg.desk); }
+    if (orb) { orb.setAttribute('fill', cfg.orb); }
+
+    var lampIds = ['bulb1', 'bulb2', 'bulb3', 'bulb4', 'bulb5'];
+    for (var j = 0; j < lampIds.length; j++) {
+      var el = document.getElementById(lampIds[j]);
+      if (el) el.setAttribute('fill', j % 2 === 0 ? cfg.bulb : '#fffbeb');
+    }
+  }
+
+  function setPhotoBg(src) {
+    document.body.style.backgroundImage = 'url("' + src + '")';
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundAttachment = 'fixed';
+
+    var pic = document.getElementById('sceneCustomImg');
+    if (pic) {
+      pic.src = src;
+      pic.style.display = 'block';
+    }
+  }
+
+  function pickBg() {
+    var k = document.getElementById('bgSelect').value;
+    setWholeBg(k);
+    try {
+      localStorage.setItem('bg_choice_v15', k);
+      localStorage.removeItem('bg_photo_v15');
+    } catch (e) {}
+    document.getElementById('bgStatusNote').textContent = 'اتغيرت الخلفية كلها.';
+  }
+
+  function uploadBg(ev) {
+    var f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    var fr = new FileReader();
+    fr.onload = function(e) {
+      setPhotoBg(e.target.result);
+      try { localStorage.setItem('bg_photo_v15', e.target.result); } catch (e2) {}
+      document.getElementById('bgStatusNote').textContent = 'اتحطت صورتك في الخلفية والرسمة.';
+    };
+    fr.readAsDataURL(f);
+  }
+
+  (function startBg() {
+    var savedP = null;
+    var savedK = null;
+    try {
+      savedP = localStorage.getItem('bg_photo_v15');
+      savedK = localStorage.getItem('bg_choice_v15');
+    } catch (e) {}
+    if (savedP) {
+      setPhotoBg(savedP);
+      document.getElementById('bgStatusNote').textContent = 'صورة الخلفية شغالة.';
+      return;
+    }
+    if (savedK && fullBgMap[savedK]) {
+      document.getElementById('bgSelect').value = savedK;
+      setWholeBg(savedK);
+    } else {
+      setWholeBg('warm_desk');
+    }
+  })();
+
+  // ميوزك من عندك
+  var customSongPlayer = null;
+
+  function loadMySong(ev) {
+    var file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    var url = URL.createObjectURL(file);
+    if (!customSongPlayer) {
+      customSongPlayer = new Audio();
+      customSongPlayer.loop = true;
+    }
+    customSongPlayer.src = url;
+    customSongPlayer.volume = state.musicVolume;
+    customSongPlayer.play().catch(function() {});
+    state.musicEnabled = true;
+    syncMusicBtn();
+    document.getElementById('audioStatusNote').textContent = 'شغال ملفك الصوتي: ' + file.name;
+  }
+
+  // نقط بتزيد كل ما تخلص حاجة
+  var earnedPoints = 0;
+  var taskRows = [];
+
+  function loadPointsAndRows() {
+    try {
+      earnedPoints = parseInt(localStorage.getItem('pts_v15') || '0', 10) || 0;
+      var savedRows = localStorage.getItem('rows_v15');
+      if (savedRows) taskRows = JSON.parse(savedRows);
+    } catch (e) {}
+
+    if (!Array.isArray(taskRows) || taskRows.length === 0) {
+      taskRows = [
+        { id: 1, name: 'مراجعة الدرس', info: '25 دقيقة', done: false },
+        { id: 2, name: 'حل أسئلة', info: '30 دقيقة', done: false }
+      ];
+    }
+    showPoints();
+    drawRows();
+  }
+
+  function showPoints() {
+    var pEl = document.getElementById('userPointsCount');
+    if (pEl) pEl.textContent = earnedPoints;
+    try { localStorage.setItem('pts_v15', String(earnedPoints)); } catch (e) {}
+  }
+
+  function saveRows() {
+    try { localStorage.setItem('rows_v15', JSON.stringify(taskRows)); } catch (e) {}
+  }
+
+  function addTaskRow() {
+    var nInp = document.getElementById('newTaskTitle');
+    var dInp = document.getElementById('newTaskNote');
+    var name = nInp.value.trim();
+    var info = dInp.value.trim() || 'مهمة';
+    if (!name) return;
+
+    taskRows.push({ id: Date.now(), name: name, info: info, done: false });
+    nInp.value = '';
+    dInp.value = '';
+    saveRows();
+    drawRows();
+  }
+
+  function toggleTaskDot(id) {
+    for (var i = 0; i < taskRows.length; i++) {
+      if (taskRows[i].id === id) {
+        taskRows[i].done = !taskRows[i].done;
+        earnedPoints += taskRows[i].done ? 1 : -1;
+        if (earnedPoints < 0) earnedPoints = 0;
+        break;
+      }
+    }
+    showPoints();
+    saveRows();
+    drawRows();
+  }
+
+  function removeTaskRow(id) {
+    taskRows = taskRows.filter(function(r) { return r.id !== id; });
+    saveRows();
+    drawRows();
+  }
+
+  function drawRows() {
+    var tb = document.getElementById('taskTableBody');
+    var prog = document.getElementById('tasksProgressNote');
+    if (!tb) return;
+
+    var doneNum = 0;
+    var htmlRows = '';
+    for (var i = 0; i < taskRows.length; i++) {
+      var r = taskRows[i];
+      if (r.done) doneNum++;
+      htmlRows += '<tr>' +
+        '<td><button type="button" class="done-dot-btn ' + (r.done ? 'checked' : '') + '" onclick="toggleTaskDot(' + r.id + ')"></button></td>' +
+        '<td class="' + (r.done ? 'task-done-text' : '') + '">' + escText(r.name) + '</td>' +
+        '<td class="' + (r.done ? 'task-done-text' : '') + '">' + escText(r.info) + '</td>' +
+        '<td><button type="button" class="tiny-del-btn" onclick="removeTaskRow(' + r.id + ')">حذف</button></td>' +
+        '</tr>';
+    }
+    tb.innerHTML = htmlRows;
+    if (prog) prog.textContent = doneNum + ' / ' + taskRows.length + ' منجز';
+  }
+
+  function escText(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // زيادة النقط عند حفظ جلسة أو إنهاء مؤقت
+  var origLogSession = logSession;
+  logSession = function(sec) {
+    earnedPoints += 1;
+    showPoints();
+    origLogSession(sec);
+  };
+
+  loadPointsAndRows();
+
+  loadData();
+
+  // ترحيب هالو أول ما حد يدخل
+  (function sayHelloOnEnter() {
+    var b = document.getElementById('helloBanner');
+    if (b) {
+      setTimeout(function() {
+        b.style.display = 'none';
+      }, 3500);
+    }
+    try {
+      if ('speechSynthesis' in window) {
+        var msg = new SpeechSynthesisUtterance('هالو');
+        msg.lang = 'ar-SA';
+        window.speechSynthesis.speak(msg);
+      }
+    } catch (e) {}
+  })();
+
+</script>
+<div class="wm-bottom-right">Youssef Mohamed</div>
+</body>
+</html>
